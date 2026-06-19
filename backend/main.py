@@ -61,7 +61,7 @@ class ModelState:
             BASE_MODEL,
             quantization_config=bnb,
             device_map="auto",
-            torch_dtype=torch.float16,
+            dtype=torch.float16,
         )
         model = PeftModel.from_pretrained(base, ADAPTERS[genre])
         model.eval()
