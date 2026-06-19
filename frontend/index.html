@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SceneForge — Genre Screenplay Generator</title>
+  <style>
+    :root {
+      --bg:        #0d0f14;
+      --surface:   #161a24;
+      --border:    #2a2f3e;
+      --text:      #e8eaf0;
+      --muted:     #7a8099;
+      --drama:     #4c9be8;
+      --horror:    #e84c4c;
+      --scifi:     #9b4ce8;
+      --comedy:    #f4a645;
+      --radius:    10px;
+      --font:      'Segoe UI', system-ui, sans-serif;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2.5rem;
+    }
+
+    header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+    }
+
+    header h1 span { color: var(--drama); }
+
+    header p {
+      color: var(--muted);
+      margin-top: 0.4rem;
+      font-size: 0.95rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.75rem;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1.25rem;
+    }
+
+    .card h2 {
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* Genre selector */
+    .genre-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+    }
+
+    .genre-btn {
+      background: transparent;
+      border: 2px solid var(--border);
+      border-radius: var(--radius);
+      color: var(--text);
+      padding: 0.9rem 0.5rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.15s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    .genre-btn .icon { font-size: 1.5rem; }
+
+    .genre-btn:hover { background: #1e2334; }
+
+    .genre-btn.active[data-genre="drama"]  { border-color: var(--drama);  color: var(--drama); }
+    .genre-btn.active[data-genre="horror"] { border-color: var(--horror); color: var(--horror); }
+    .genre-btn.active[data-genre="scifi"]  { border-color: var(--scifi);  color: var(--scifi); }
+    .genre-btn.active[data-genre="comedy"] { border-color: var(--comedy); color: var(--comedy); }
+
+    /* Form fields */
+    label {
+      display: block;
+      font-size: 0.82rem;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+      margin-top: 1rem;
+    }
+
+    label:first-of-type { margin-top: 0; }
+
+    input, textarea {
+      width: 100%;
+      background: #0d0f14;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-family: var(--font);
+      font-size: 0.92rem;
+      padding: 0.65rem 0.85rem;
+      outline: none;
+      transition: border-color 0.15s;
+      resize: vertical;
+    }
+
+    input:focus, textarea:focus { border-color: #4a5068; }
+
+    /* Sliders */
+    .slider-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .slider-group label { margin-top: 0; }
+
+    input[type="range"] {
+      padding: 0;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      accent-color: var(--drama);
+    }
+
+    .slider-val {
+      font-size: 0.8rem;
+      color: var(--muted);
+      text-align: right;
+    }
+
+    /* Generate button */
+    #generate-btn {
+      width: 100%;
+      max-width: 720px;
+      padding: 0.9rem;
+      border: none;
+      border-radius: var(--radius);
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      background: var(--drama);
+      color: #fff;
+      transition: opacity 0.15s, background 0.2s;
+      margin-bottom: 1.25rem;
+    }
+
+    #generate-btn:hover   { opacity: 0.88; }
+    #generate-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    #generate-btn.genre-horror { background: var(--horror); }
+    #generate-btn.genre-scifi  { background: var(--scifi);  }
+    #generate-btn.genre-comedy { background: var(--comedy); }
+
+    /* Output */
+    #output-card { display: none; }
+
+    .output-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+
+    .genre-badge {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+    }
+
+    .badge-drama  { background: #1a2e45; color: var(--drama); }
+    .badge-horror { background: #3a1a1a; color: var(--horror); }
+    .badge-scifi  { background: #2a1a45; color: var(--scifi); }
+    .badge-comedy { background: #3a2a10; color: var(--comedy); }
+
+    .latency {
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    #screenplay-output {
+      font-family: 'Courier New', monospace;
+      font-size: 0.88rem;
+      line-height: 1.75;
+      white-space: pre-wrap;
+      color: #c8cfe0;
+      background: #0a0c10;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 1.25rem;
+      min-height: 200px;
+    }
+
+    .copy-btn {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      border-radius: 6px;
+      padding: 0.35rem 0.75rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .copy-btn:hover { border-color: #4a5068; color: var(--text); }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px; height: 16px;
+      border: 2px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Error */
+    #error-msg {
+      display: none;
+      background: #2a1212;
+      border: 1px solid #5a2020;
+      color: #e88;
+      border-radius: var(--radius);
+      padding: 0.85rem 1rem;
+      font-size: 0.88rem;
+      width: 100%;
+      max-width: 720px;
+      margin-bottom: 1rem;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <h1>Scene<span>Forge</span></h1>
+    <p>Genre-specific screenplay scenes powered by fine-tuned LoRA adapters</p>
+  </header>
+
+  <!-- Genre selector -->
+  <div class="card">
+    <h2>1 · Choose Genre</h2>
+    <div class="genre-grid">
+      <button class="genre-btn active" data-genre="drama">
+        <span class="icon">🎭</span> Drama
+      </button>
+      <button class="genre-btn" data-genre="horror">
+        <span class="icon">👁️</span> Horror
+      </button>
+      <button class="genre-btn" data-genre="scifi">
+        <span class="icon">🚀</span> Sci-Fi
+      </button>
+      <button class="genre-btn" data-genre="comedy">
+        <span class="icon">😂</span> Comedy
+      </button>
+    </div>
+  </div>
+
+  <!-- Scene inputs -->
+  <div class="card">
+    <h2>2 · Scene Details</h2>
+
+    <label for="scene-heading">Scene Heading</label>
+    <input id="scene-heading" type="text"
+           placeholder="e.g. INT. HOSPITAL WAITING ROOM - NIGHT"
+           value="INT. KITCHEN - MORNING" />
+
+    <label for="story-context">Story Context / Premise</label>
+    <textarea id="story-context" rows="3"
+              placeholder="Briefly describe what's happening or the emotional setup...">Two estranged siblings meet for the first time in five years.</textarea>
+
+    <label for="characters">Characters (optional)</label>
+    <input id="characters" type="text"
+           placeholder="e.g. MAYA (30s, guarded), DANIEL (40s, remorseful)" />
+
+    <label for="tone">Tone (optional)</label>
+    <input id="tone" type="text"
+           placeholder="e.g. tense, melancholic, absurd, hopeful" />
+  </div>
+
+  <!-- Generation settings -->
+  <div class="card">
+    <h2>3 · Generation Settings</h2>
+    <div class="slider-row">
+      <div class="slider-group">
+        <label>Max Tokens</label>
+        <input type="range" id="max-tokens" min="50" max="800" step="50" value="400"
+               oninput="document.getElementById('max-tokens-val').textContent = this.value" />
+        <div class="slider-val"><span id="max-tokens-val">400</span></div>
+      </div>
+      <div class="slider-group">
+        <label>Temperature</label>
+        <input type="range" id="temperature" min="0.1" max="1.5" step="0.05" value="0.8"
+               oninput="document.getElementById('temp-val').textContent = parseFloat(this.value).toFixed(2)" />
+        <div class="slider-val"><span id="temp-val">0.80</span></div>
+      </div>
+      <div class="slider-group">
+        <label>Top-p</label>
+        <input type="range" id="top-p" min="0.1" max="1.0" step="0.05" value="0.9"
+               oninput="document.getElementById('topp-val').textContent = parseFloat(this.value).toFixed(2)" />
+        <div class="slider-val"><span id="topp-val">0.90</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="error-msg"></div>
+
+  <button id="generate-btn" class="genre-drama">✍️ Generate Scene</button>
+
+  <!-- Output -->
+  <div class="card" id="output-card">
+    <div class="output-meta">
+      <span id="genre-badge" class="genre-badge badge-drama">Drama</span>
+      <div style="display:flex; gap:0.75rem; align-items:center;">
+        <span class="latency" id="latency-display"></span>
+        <button class="copy-btn" onclick="copyScreenplay()">Copy</button>
+      </div>
+    </div>
+    <div id="screenplay-output"></div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:8000';
+    let selectedGenre = 'drama';
+
+    // Genre selection
+    document.querySelectorAll('.genre-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.genre-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        selectedGenre = btn.dataset.genre;
+
+        const genBtn = document.getElementById('generate-btn');
+        genBtn.className = `genre-${selectedGenre}`;
+      });
+    });
+
+    // Generate
+    document.getElementById('generate-btn').addEventListener('click', async () => {
+      const btn         = document.getElementById('generate-btn');
+      const errEl       = document.getElementById('error-msg');
+      const outputCard  = document.getElementById('output-card');
+
+      errEl.style.display = 'none';
+
+      const payload = {
+        genre:          selectedGenre,
+        scene_heading:  document.getElementById('scene-heading').value.trim(),
+        story_context:  document.getElementById('story-context').value.trim(),
+        characters:     document.getElementById('characters').value.trim() || null,
+        tone:           document.getElementById('tone').value.trim() || null,
+        max_new_tokens: parseInt(document.getElementById('max-tokens').value),
+        temperature:    parseFloat(document.getElementById('temperature').value),
+        top_p:          parseFloat(document.getElementById('top-p').value),
+      };
+
+      if (!payload.scene_heading || !payload.story_context) {
+        errEl.textContent = 'Please fill in Scene Heading and Story Context.';
+        errEl.style.display = 'block';
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = '<span class="spinner"></span>Generating...';
+      outputCard.style.display = 'none';
+
+      try {
+        const resp = await fetch(`${API_BASE}/generate`, {
+          method:  'POST',
+          headers: {'Content-Type': 'application/json'},
+          body:    JSON.stringify(payload),
+        });
+
+        if (!resp.ok) {
+          const err = await resp.json();
+          throw new Error(err.detail || `HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+
+        // Populate output
+        const badge = document.getElementById('genre-badge');
+        badge.textContent = data.genre.charAt(0).toUpperCase() + data.genre.slice(1);
+        badge.className   = `genre-badge badge-${data.genre}`;
+
+        document.getElementById('latency-display').textContent =
+          `${(data.latency_ms / 1000).toFixed(1)}s`;
+        document.getElementById('screenplay-output').textContent = data.screenplay;
+
+        outputCard.style.display = 'block';
+        outputCard.scrollIntoView({behavior: 'smooth', block: 'start'});
+
+      } catch (err) {
+        errEl.textContent = `Error: ${err.message}`;
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '✍️ Generate Scene';
+      }
+    });
+
+    function copyScreenplay() {
+      const text = document.getElementById('screenplay-output').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 1500);
+      });
+    }
+  </script>
+</body>
+</html>

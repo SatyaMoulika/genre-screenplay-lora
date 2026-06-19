@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Environment / secrets
+.env
+*.token
+
+# Model / data artifacts (large files — don't commit)
+checkpoints/
+genre_data/
+*.bin
+*.safetensors
+*.gguf
+*.csv
+eval_summary.csv
+base_model_results.csv
+finetuned_model_results.csv
+
+# Plots (regenerate from notebooks, don't bloat repo)
+*.png
+!docs/*.png
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
