@@ -56,7 +56,7 @@ Every adapter is meaningfully more fluent (lower perplexity) on its own genre th
 ## Setup
 
 ```bash
-git clone https://github.com/<your-username>/genre-screenplay-lora.git
+git clone https://github.com/SatyaMoulika/genre-screenplay-lora.git
 cd genre-screenplay-lora
 
 # Backend
